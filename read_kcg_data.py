@@ -3,6 +3,7 @@ import urllib.request
 import csv
 import io
 from datetime import datetime
+from itertools import zip_longest
 
 url = "https://data.ntpc.gov.tw/api/datasets/781b822e-214a-4b9a-b4db-32c9f4626d98/csv/file"
 
@@ -17,8 +18,10 @@ try:
         text = raw_data.decode("utf-8", errors="replace")
         
         # 解析 CSV
-        reader = csv.reader(io.StringIO(text))
-        data = list(reader)
+        csv_file = io.StringIO(text)
+        reader = csv.DictReader(csv_file)
+        headers = reader.fieldnames or []
+        rows = list(reader)
         
         # 準備輸出內容
         output_lines = []
@@ -31,10 +34,7 @@ try:
         output_lines.append(f"資料長度: {len(raw_data)} bytes")
         output_lines.append(f"讀取時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
-        if data:
-            headers = data[0]
-            rows = data[1:]
-            
+        if rows:
             output_lines.append("\n" + "="*80)
             output_lines.append("資料摘要")
             output_lines.append("="*80)
@@ -51,8 +51,11 @@ try:
             
             for idx, row in enumerate(rows, 1):
                 output_lines.append(f"\n───── 第{idx}筆資料 ─────")
-                for header, value in zip(headers, row):
-                    output_lines.append(f"{header}: {value}")
+                for header in headers:
+                    output_lines.append(f"{header}: {row.get(header, '')}")
+                extra_keys = [k for k in row.keys() if k not in headers]
+                for key in extra_keys:
+                    output_lines.append(f"{key}: {row.get(key, '')}")
         else:
             output_lines.append("無法解析資料")
         

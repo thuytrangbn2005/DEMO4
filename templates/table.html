@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資料讀取器 - 表格檢視</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #eef2f7;
+            color: #1f2937;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 24px 80px rgba(31, 41, 55, 0.12);
+            overflow: hidden;
+        }
+
+        header {
+            padding: 32px 36px 16px;
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            color: #ffffff;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 16px 36px 28px;
+            background: #ffffff;
+        }
+
+        .nav-buttons a {
+            padding: 12px 18px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 600;
+            color: #475569;
+            background: #f8fafc;
+            transition: all 0.2s ease;
+        }
+
+        .nav-buttons a.active,
+        .nav-buttons a:hover {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            padding: 28px 36px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .summary-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 20px 22px;
+            box-shadow: inset 0 0 0 1px rgba(79, 70, 229, 0.08);
+        }
+
+        .summary-card .label {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .value {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            padding: 0 36px 36px;
+        }
+
+        table {
+            width: 100%;
+            min-width: 1050px;
+            border-collapse: collapse;
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: #1e3a8a;
+            color: #ffffff;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 18px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        th {
+            font-size: 0.92rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        td {
+            font-size: 0.95rem;
+            color: #334155;
+            max-width: 220px;
+        }
+
+        td .cell {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        td .clamp-3,
+        td .clamp-4 {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            white-space: normal;
+        }
+
+        td .clamp-3 {
+            -webkit-line-clamp: 3;
+            max-height: 4.5em;
+        }
+
+        td .clamp-4 {
+            -webkit-line-clamp: 4;
+            max-height: 6em;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.15s ease, background 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .button.primary {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .button.secondary {
+            background: #0f172a;
+            color: #ffffff;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: #e0f2fe;
+            color: #0c4a6e;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 24px 36px;
+            margin: 36px;
+            border-radius: 18px;
+            border: 1px solid #fecaca;
+        }
+
+        @media (max-width: 960px) {
+            .container {
+                border-radius: 18px;
+            }
+
+            th,
+            td {
+                padding: 14px 12px;
+            }
+
+            .summary {
+                padding: 20px 24px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .nav-buttons {
+                justify-content: center;
+            }
+
+            .summary {
+                display: block;
+            }
+
+            th,
+            td {
+                padding: 12px 10px;
+                font-size: 0.88rem;
+            }
+
+            td .cell {
+                white-space: normal;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>資料查詢平台</h1>
+            <p class="subtitle">新北市政府開放資料，專業查詢與清晰展示。</p>
+        </header>
+
+        <nav class="nav-buttons">
+            <a href="/">首頁</a>
+            <a href="/table" class="active">資料列表</a>
+            <a href="/details/1">詳細資料</a>
+        </nav>
+
+        {% if data.success %}
+            <section class="summary">
+                <div class="summary-card">
+                    <div class="label">資料來源</div>
+                    <div class="value">{{ data.url }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">總列數</div>
+                    <div class="value">{{ data.total_rows }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">欄位數</div>
+                    <div class="value">{{ data.total_columns }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">讀取時間</div>
+                    <div class="value">{{ data.fetch_time }}</div>
+                </div>
+            </section>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 58px;">#</th>
+                            {% for header in data.display_headers %}
+                                <th>{{ header }}</th>
+                            {% endfor %}
+                            <th style="width: 260px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in data.records %}
+                            <tr>
+                                <td><span class="badge">{{ loop.index }}</span></td>
+                                {% for header in data.display_headers %}
+                                    {% set text = row[header] %}
+                                    {% set lower = header.lower() %}
+                                    <td>
+                                        {% if 'title' in lower or 'name' in lower or 'subject' in lower %}
+                                            <div class="cell clamp-4">{{ text }}</div>
+                                        {% elif 'desc' in lower or 'summary' in lower or 'content' in lower %}
+                                            <div class="cell clamp-3">{{ text }}</div>
+                                        {% else %}
+                                            <div class="cell">{{ text }}</div>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                                <td>
+                                    <div class="actions">
+                                        {% if data.link_field and row[data.link_field] %}
+                                            <a class="button secondary" href="{{ row[data.link_field] }}" target="_blank" rel="noopener">查看連結</a>
+                                        {% endif %}
+                                        <a class="button primary" href="{{ url_for('details', record_id=loop.index) }}">詳細資料</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="error">
+                <strong>無法讀取資料：</strong> {{ data.error }}
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資料讀取器 - 詳細資料</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f3f4f6;
+            color: #1f2937;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 28px 90px rgba(15, 23, 42, 0.12);
+            overflow: hidden;
+        }
+
+        header {
+            padding: 32px 36px 16px;
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            color: #ffffff;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 0.95rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 16px 36px 28px;
+            background: #ffffff;
+        }
+
+        .nav-buttons a {
+            padding: 12px 18px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 600;
+            color: #475569;
+            background: #f8fafc;
+            transition: all 0.2s ease;
+        }
+
+        .nav-buttons a.active,
+        .nav-buttons a:hover {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .record-card {
+            padding: 28px 36px 36px;
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            gap: 16px;
+        }
+
+        .record-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .record-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .button {
+            display: inline-flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            border-radius: 999px;
+            text-decoration: none;
+            border: none;
+            font-weight: 700;
+            transition: transform 0.15s ease, background 0.15s ease;
+            cursor: pointer;
+        }
+
+        .button.primary {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .button.secondary {
+            background: #0f172a;
+            color: #ffffff;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 18px;
+        }
+
+        .field {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            padding: 18px 20px;
+        }
+
+        .field-label {
+            font-size: 0.88rem;
+            color: #64748b;
+            margin-bottom: 10px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .field-value {
+            color: #0f172a;
+            line-height: 1.8;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        .field-value a {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            padding: 36px;
+            text-align: center;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .error {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 24px 36px;
+            margin: 36px;
+            border-radius: 18px;
+            border: 1px solid #fecaca;
+        }
+
+        @media (max-width: 820px) {
+            .record-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .fields {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 0;
+            }
+
+            header,
+            .nav-buttons,
+            .record-card {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+
+            .record-title {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>資料查詢平台</h1>
+            <p class="subtitle">點選任一筆資料查看完整內容與來源連結。</p>
+        </header>
+
+        <nav class="nav-buttons">
+            <a href="/">首頁</a>
+            <a href="/table">資料列表</a>
+            <a href="/details/1" class="active">詳細資料</a>
+        </nav>
+
+        <section class="record-card">
+            {% if not data.success %}
+                <div class="error">
+                    <strong>無法讀取資料：</strong> {{ data.error }}
+                </div>
+            {% elif not record %}
+                <div class="empty-state">
+                    請先從「資料列表」頁面選擇一筆資料，然後點擊「詳細資料」按鈕。
+                </div>
+            {% else %}
+                <div class="record-header">
+                    <div>
+                        <div class="record-title">第 {{ record_id }} 筆資料</div>
+                        <div class="tag">共 {{ data.total_rows }} 筆資料</div>
+                    </div>
+                    <div class="record-meta">
+                        {% if data.link_field and record[data.link_field] %}
+                            <a class="button secondary" href="{{ record[data.link_field] }}" target="_blank" rel="noopener">查看連結</a>
+                        {% endif %}
+                        <a class="button primary" href="/table">返回列表</a>
+                    </div>
+                </div>
+
+                <div class="fields">
+                    {% for header in data.headers %}
+                        <div class="field">
+                            <div class="field-label">{{ header }}</div>
+                            <div class="field-value">
+                                {% set value = record[header] %}
+                                {% if data.link_field and header == data.link_field %}
+                                    <a href="{{ value }}" target="_blank" rel="noopener">{{ value }}</a>
+                                {% else %}
+                                    {{ value }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</body>
+</html>
